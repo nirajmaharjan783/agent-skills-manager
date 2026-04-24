@@ -1,14 +1,20 @@
 //app/skills/create/page.tsx
 "use client"
 
-import { createSkill } from "@/app/action/skills"
+
+import { createSkill } from "@/action/skills"
 import { useActionState } from "react"
+
+type state = {
+    message: string
+}
 
 const initialState = {
     message: ""
 }
 
 export default function NewSkillPage() {
+
     const [state, formAction, isPending] = useActionState(createSkill, initialState)
 
     return (
