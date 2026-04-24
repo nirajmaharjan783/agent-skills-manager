@@ -7,17 +7,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { updateSkill } from "@/action/skills";
 
 interface PageProps {
-    params: Promise<{ id: string }>;
+    params: { id: string };
 }
 
-/**
- * Edit Skill Page - CSR (Client-Side Rendering)
- * Uses client state for form handling with dynamic route
- */
 export default function EditSkillPage({ params }: PageProps) {
     const router = useRouter();
     const { user, isAuthenticated, isLoading } = useAuth();
-    const [skillId, setSkillId] = useState<number | null>(null);
+
+    // ✅ FIX: no state needed for id
+    const skillId = parseInt(params.id);
+
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [content, setContent] = useState("");
@@ -26,64 +25,61 @@ export default function EditSkillPage({ params }: PageProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loadingSkill, setLoadingSkill] = useState(true);
 
-    // Get params
-    useEffect(() => {
-        params.then((p) => setSkillId(parseInt(p.id)))
-    }, [params])
-
     // Redirect if not authenticated
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            router.push("/login")
+            router.push("/login");
         }
-    }, [isLoading, isAuthenticated, router])
+    }, [isLoading, isAuthenticated, router]);
 
     // Fetch skill data
     useEffect(() => {
-        if (skillId && user) { //only fetch if the skillId exist and user is logged in
-            fetchSkill()
-        }
-    }, [skillId, user])
+        if (isNaN(skillId) || !user) return;
 
-    const fetchSkill = async () => {
-        try {
-            if (!skillId) return
+        const fetchSkill = async () => {
+            try {
+                const response = await fetch(`/api/skills/${skillId}`, {
+                    credentials: "include",
+                });
 
-            const response = await fetch(`/api/skills/${skillId}`, {
-                credentials: "include",
-            })
-            if (response.ok) {
-                const data = await response.json()
-                if (data.skill) {
-                    setName(data.skill.name)
-                    setDescription(data.skill.description)
-                    setContent(data.skill.content)
-                    setIsPublic(data.skill.isPublic)
-                } else if (response.status === 404) {
-                    setError("Skill not found")
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.skill) {
+                        setName(data.skill.name);
+                        setDescription(data.skill.description);
+                        setContent(data.skill.content);
+                        setIsPublic(data.skill.isPublic);
+                    } else {
+                        setError("Skill not found");
+                    }
                 } else if (response.status === 403) {
-                    setError("You dont have permission to edit the skill")
+                    setError("You don't have permission to edit this skill");
+                } else if (response.status === 404) {
+                    setError("Skill not found");
                 }
+            } catch (err) {
+                setError("Failed to load skill");
+            } finally {
+                setLoadingSkill(false);
             }
-        } catch (err) {
-            setError("Failed to load skill")
-        } finally {
-            setLoadingSkill(false)
-        }
-    }
+        };
+
+        fetchSkill();
+    }, [skillId, user]);
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setError("")
+        e.preventDefault();
+        setError("");
 
         if (!name.trim() || !description.trim() || !content.trim()) {
-            setError("All fields are required")
-            return
+            setError("All fields are required");
+            return;
         }
 
-        if (!skillId || !user) return
+        if (isNaN(skillId) || !user) return;
 
-        setIsSubmitting(true)
+        setIsSubmitting(true);
 
         try {
             const result = await updateSkill(
@@ -95,20 +91,20 @@ export default function EditSkillPage({ params }: PageProps) {
                     isPublic,
                 },
                 user.id
-            )
+            );
 
             if (result.success) {
-                router.push("/dashboard")
+                router.push("/dashboard");
             } else {
-                setError(result.error || "Failed to upadte skill")
+                setError(result.error || "Failed to update skill");
             }
         } catch (error) {
-            console.error("An error occured while updating skill")
+            console.error("Update error:", error);
+            setError("Something went wrong");
         } finally {
-            setIsSubmitting(false)
+            setIsSubmitting(false);
         }
-    }
-
+    };
 
     if (isLoading || loadingSkill) {
         return (
@@ -153,83 +149,50 @@ export default function EditSkillPage({ params }: PageProps) {
                             </div>
                         )}
 
-                        <div className="form-control w-full">
-                            <label className="label">
-                                <span className="label-text font-medium">Skill Name</span>
-                            </label>
+                        <input
+                            className="input input-bordered w-full"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Skill Name"
+                            required
+                        />
+
+                        <input
+                            className="input input-bordered w-full"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Description"
+                            required
+                        />
+
+                        <textarea
+                            className="textarea textarea-bordered w-full h-64"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder="Content"
+                            required
+                        />
+
+                        <label className="flex items-center gap-2">
                             <input
-                                type="text"
-                                placeholder="e.g., web-design-guidelines"
-                                className="input input-bordered w-full"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                maxLength={100}
-                                required
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={(e) => setIsPublic(e.target.checked)}
                             />
-                        </div>
-
-                        <div className="form-control w-full">
-                            <label className="label">
-                                <span className="label-text font-medium">Description</span>
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Brief description of what this skill does"
-                                className="input input-bordered w-full"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                maxLength={500}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-control w-full">
-                            <label className="label">
-                                <span className="label-text font-medium">
-                                    Skill Content (Markdown)
-                                </span>
-                            </label>
-                            <textarea
-                                placeholder="Enter your skill content in markdown format..."
-                                className="textarea textarea-bordered w-full h-64 font-mono text-sm"
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-control">
-                            <label className="label cursor-pointer justify-start gap-4">
-                                <input
-                                    type="checkbox"
-                                    className="toggle toggle-primary"
-                                    checked={isPublic}
-                                    onChange={(e) => setIsPublic(e.target.checked)}
-                                />
-                                <span className="label-text">Make this skill public</span>
-                            </label>
-                            <p className="text-sm text-base-content/60 ml-14">
-                                Public skills appear in the gallery and can be viewed by anyone
-                            </p>
-                        </div>
+                            Make Public
+                        </label>
 
                         <div className="flex justify-end gap-3 pt-4">
                             <Link href="/dashboard" className="btn btn-ghost">
                                 Cancel
                             </Link>
+
                             <button
                                 type="submit"
                                 className="btn btn-primary"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? (
-                                    <>
-                                        <span className="loading loading-spinner loading-sm"></span>
-                                        Saving...
-                                    </>
-                                ) : (
-                                    "Save Changes"
-                                )}
+                                {isSubmitting ? "Saving..." : "Save Changes"}
                             </button>
                         </div>
                     </form>
