@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
  * Revalidates every 60 seconds for fresh content
  */
 
+export const dynamic = "force-dynamic"; // ✅ FIX
+
 type Skill = {
     id: number;
     name: string;
@@ -16,15 +18,8 @@ type Skill = {
     };
 };
 
-export const revalidate = 60;
-
-export const metadata = {
-    title: "Browse Skills | Agent Skills Manager",
-    description: "Explore public AI agent skills created by the community",
-};
-
 async function getPublicSkills(): Promise<Skill[]> {
-    const skills: Skill[] = await prisma.skill.findMany({
+    return await prisma.skill.findMany({
         where: { isPublic: true },
         include: {
             author: {
@@ -33,12 +28,10 @@ async function getPublicSkills(): Promise<Skill[]> {
         },
         orderBy: { createdAt: "desc" },
     });
-    return skills;
 }
 
 export default async function SkillsPage() {
     const skills = await getPublicSkills();
-
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-8">
