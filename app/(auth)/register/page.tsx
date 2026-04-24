@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,10 +20,11 @@ export default function RegisterPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Redirect if already authenticated
-    if (!isLoading && isAuthenticated) {
-        router.push("/dashboard");
-        return null;
-    }
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            router.push("/dashboard")
+        }
+    }, [isLoading, isAuthenticated, router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

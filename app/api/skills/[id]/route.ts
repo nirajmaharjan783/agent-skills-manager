@@ -2,13 +2,13 @@ import { NextResponse, NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-interface RouteParams {
-    params: { id: string }
-}
+// interface RouteParams {
+//     params: { id: string }
+// }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params
+        const { id } = await context.params
         const skillId = parseInt(id) // "11" -> 11
 
         if (isNaN(skillId)) { //abc invalid, 123-> valid

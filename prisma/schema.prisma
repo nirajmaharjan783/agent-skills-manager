@@ -22,12 +22,12 @@ model Skill {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(100)
   description String   @db.VarChar(500)
-  content     String   @db.Text
+  content     String
   isPublic    Boolean  @default(true) @map("is_public")
   authorId    Int      @map("author_id")
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@map("skills")
 }
