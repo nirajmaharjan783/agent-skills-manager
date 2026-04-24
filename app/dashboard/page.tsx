@@ -145,7 +145,7 @@ export default function DashboardPage() {
                 </div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {skills.map((skill) => (
+                    {skills.map((skill: Skill) => (
                         <div key={skill.id} className="card bg-base-200">
                             <div className="card-body">
                                 <div className="flex justify-between items-start">
