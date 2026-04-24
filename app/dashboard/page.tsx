@@ -14,6 +14,10 @@ interface Skill {
     createdAt: string;
 }
 
+interface SkillResponse {
+    skills: Skill[]
+}
+
 /**
  * Dashboard Page - Client Component with httpOnly Cookie Auth
  * Uses cookies (sent automatically) for authentication
@@ -43,8 +47,8 @@ export default function DashboardPage() {
                 credentials: "include",
             })
             if (response.ok) {
-                const data = await response.json()
-                setSkills(data.skills || [])
+                const data: SkillResponse = await response.json()
+                setSkills(data.skills ?? [])
             }
         } catch (error) {
             console.error("Failed to fetch skills:", error)
@@ -145,7 +149,7 @@ export default function DashboardPage() {
                 </div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {skills.map((skill: Skill) => (
+                    {skills.map((skill) => (
                         <div key={skill.id} className="card bg-base-200">
                             <div className="card-body">
                                 <div className="flex justify-between items-start">
