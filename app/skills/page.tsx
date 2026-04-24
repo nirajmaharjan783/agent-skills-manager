@@ -5,6 +5,17 @@ import { prisma } from "@/lib/prisma";
  * Skills Gallery - ISR (Incremental Static Regeneration)
  * Revalidates every 60 seconds for fresh content
  */
+
+type Skill = {
+    id: number;
+    name: string;
+    description: string;
+    createdAt: Date;
+    author: {
+        name: string;
+    };
+};
+
 export const revalidate = 60;
 
 export const metadata = {
@@ -12,8 +23,8 @@ export const metadata = {
     description: "Explore public AI agent skills created by the community",
 };
 
-async function getPublicSkills() {
-    const skills = await prisma.skill.findMany({
+async function getPublicSkills(): Promise<Skill[]> {
+    const skills: Skill[] = await prisma.skill.findMany({
         where: { isPublic: true },
         include: {
             author: {
@@ -53,7 +64,7 @@ export default async function SkillsPage() {
                 </div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {skills.map((skill) => (
+                    {skills.map((skill: Skill) => (
                         <Link
                             key={skill.id}
                             href={`/skills/${skill.id}`}
